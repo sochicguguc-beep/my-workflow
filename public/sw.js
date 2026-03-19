@@ -1,17 +1,18 @@
-const CACHE_NAME = 'workflow-os-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-];
+const CACHE_NAME = 'workflow-os-v3';
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => caches.delete(key)))
+    )
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
-  );
+  event.respondWith(fetch(event.request));
 });
