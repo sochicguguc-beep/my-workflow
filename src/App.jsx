@@ -1,56 +1,30 @@
 import { useState } from "react";
 
-// ─── ROLE THEMES ─────────────────────────────────────────────────────────────
-// スタッフ = ライトブルー系、上司 = ウォームアンバー系
 const THEME = {
-  staff: {
-    accent:     "#0066FF",
-    accentSoft: "#E8F0FF",
-    accentText: "#0044CC",
-    headerBg:   "#0066FF",
-    headerText: "#FFFFFF",
-    badge:      "#0066FF",
-    label:      "スタッフ",
-    emoji:      "👤",
-  },
-  boss: {
-    accent:     "#B45309",
-    accentSoft: "#FFF7ED",
-    accentText: "#92400E",
-    headerBg:   "#1C1917",
-    headerText: "#FFFFFF",
-    badge:      "#B45309",
-    label:      "上司",
-    emoji:      "👔",
-  },
+  staff: { accent:"#0066FF", accentSoft:"#E8F0FF", accentText:"#0044CC", headerBg:"#0066FF", label:"スタッフ", emoji:"👤" },
+  boss:  { accent:"#B45309", accentSoft:"#FFF7ED", accentText:"#92400E", headerBg:"#1C1917", label:"上司",     emoji:"👔" },
 };
 
 const BASE = {
-  bg:      "#F5F4F0",
-  surface: "#FFFFFF",
-  border:  "#E8E6E0",
-  text:    "#1A1A1A",
-  sub:     "#888880",
-  green:   "#1DB954",
-  orange:  "#FF6B00",
-  red:     "#E63946",
-  purple:  "#7C3AED",
+  bg:"#F5F4F0", surface:"#FFFFFF", border:"#E8E6E0",
+  text:"#1A1A1A", sub:"#888880",
+  green:"#1DB954", orange:"#FF6B00", red:"#E63946", purple:"#7C3AED",
 };
 
 const STEPS = [
-  { id:"intake",     title:"案件受付",     emoji:"📥", role:"staff" },
-  { id:"approval",   title:"上司が承認",   emoji:"✅", role:"boss"  },
-  { id:"staff_view", title:"スタッフ通知", emoji:"📢", role:"staff" },
-  { id:"report",     title:"成果報告",     emoji:"📊", role:"all"   },
+  { id:"intake",     title:"案件受付",     emoji:"📥" },
+  { id:"approval",   title:"上司が承認",   emoji:"✅" },
+  { id:"staff_view", title:"スタッフ通知", emoji:"📢" },
+  { id:"report",     title:"成果報告",     emoji:"📊" },
 ];
 
 const REASONS = [
-  { id:"info",    emoji:"📋", text:"情報が足りない"     },
-  { id:"budget",  emoji:"💰", text:"予算確認が必要"     },
-  { id:"people",  emoji:"👥", text:"関係者と相談したい" },
-  { id:"timing",  emoji:"⏰", text:"時期が合わない"     },
-  { id:"risk",    emoji:"⚠️", text:"リスクを確認したい" },
-  { id:"other",   emoji:"💬", text:"その他"             },
+  { id:"info",   emoji:"📋", text:"情報が足りない"     },
+  { id:"budget", emoji:"💰", text:"予算確認が必要"     },
+  { id:"people", emoji:"👥", text:"関係者と相談したい" },
+  { id:"timing", emoji:"⏰", text:"時期が合わない"     },
+  { id:"risk",   emoji:"⚠️", text:"リスクを確認したい" },
+  { id:"other",  emoji:"💬", text:"その他"             },
 ];
 
 const SLOTS = [
@@ -77,33 +51,27 @@ const SAMPLE_NOTIFS = [
 function Tile({ children, style={} }) {
   return <div style={{ background:BASE.surface, borderRadius:20, padding:"20px 18px", ...style }}>{children}</div>;
 }
-
-function Label({ children }) {
+function Lbl({ children }) {
   return <p style={{ fontSize:12, fontWeight:700, color:BASE.sub, margin:"0 0 6px", letterSpacing:".5px" }}>{children}</p>;
 }
-
 function Inp({ placeholder, value, onChange, multiline, type }) {
   const s = { width:"100%", padding:"13px 14px", borderRadius:12, border:`1.5px solid ${BASE.border}`, background:BASE.bg, color:BASE.text, fontSize:15, fontFamily:"inherit", outline:"none" };
   return multiline
-    ? <textarea style={{...s, height:88}} placeholder={placeholder} value={value} onChange={onChange} />
-    : <input style={s} type={type||"text"} placeholder={placeholder} value={value} onChange={onChange} />;
+    ? <textarea style={{...s,height:88}} placeholder={placeholder} value={value} onChange={onChange}/>
+    : <input style={s} type={type||"text"} placeholder={placeholder} value={value} onChange={onChange}/>;
 }
-
 function TapBtn({ children, color, textColor="white", onClick, disabled, outline }) {
   return (
     <button onClick={onClick} disabled={disabled} className={disabled?"":"tap-scale"} style={{
       width:"100%", padding:"17px 20px", borderRadius:16,
-      border: outline ? `2px solid ${color}` : "none",
-      background: outline ? "transparent" : disabled ? "#E8E6E0" : color,
-      color: outline ? color : disabled ? BASE.sub : textColor,
+      border: outline?`2px solid ${color}`:"none",
+      background: outline?"transparent":disabled?"#E8E6E0":color,
+      color: outline?color:disabled?BASE.sub:textColor,
       fontSize:16, fontWeight:800, cursor:disabled?"default":"pointer",
       fontFamily:"inherit", transition:"all .15s",
-    }}>
-      {children}
-    </button>
+    }}>{children}</button>
   );
 }
-
 function Toast({ msg, accent }) {
   return (
     <div style={{
@@ -116,45 +84,33 @@ function Toast({ msg, accent }) {
 }
 
 // ─── FIXED HEADER ────────────────────────────────────────────────────────────
+// 高さ：safe-area + 60px
 
-function AppHeader({ role, onSwitch, tab }) {
+function AppHeader({ role, onSwitch }) {
   const th = THEME[role];
-  const tabLabels = { home:"ホーム", cases:"案件一覧", notifs:"通知", profile:"マイページ" };
   return (
     <div style={{
       position:"fixed", top:0, left:0, right:0, zIndex:500,
-      background: th.headerBg,
+      background:th.headerBg,
       paddingTop:"env(safe-area-inset-top)",
     }}>
       <div style={{
         display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"12px 18px",
+        padding:"14px 18px", height:60,
       }}>
         <div>
-          <div style={{ fontSize:16, fontWeight:900, color:"white", letterSpacing:"-.3px" }}>
-            WorkFlow OS
-          </div>
-          <div style={{ fontSize:11, color:"rgba(255,255,255,0.6)", marginTop:1 }}>
-            {tabLabels[tab]}
-          </div>
+          <div style={{ fontSize:17, fontWeight:900, color:"white", letterSpacing:"-.3px" }}>WorkFlow OS</div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,0.55)", marginTop:1 }}>案件管理システム</div>
         </div>
-
-        {/* ロール切り替えボタン */}
         <button onClick={onSwitch} className="tap-scale" style={{
           display:"flex", alignItems:"center", gap:8,
-          background:"rgba(255,255,255,0.15)",
-          border:"1.5px solid rgba(255,255,255,0.3)",
-          borderRadius:24, padding:"7px 14px",
+          background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.35)",
+          borderRadius:24, padding:"8px 14px",
           cursor:"pointer", fontFamily:"inherit",
-          transition:"all .2s",
         }}>
           <span style={{ fontSize:16 }}>{th.emoji}</span>
           <span style={{ fontSize:13, fontWeight:800, color:"white" }}>{th.label}</span>
-          <span style={{
-            fontSize:10, fontWeight:700,
-            background:"rgba(255,255,255,0.25)",
-            color:"white", padding:"1px 6px", borderRadius:10,
-          }}>切替</span>
+          <span style={{ fontSize:10, fontWeight:700, background:"rgba(255,255,255,0.25)", color:"white", padding:"1px 7px", borderRadius:10 }}>切替</span>
         </button>
       </div>
     </div>
@@ -167,51 +123,40 @@ function FlowStrip({ currentId, role }) {
   const th = THEME[role];
   const idx = STEPS.findIndex(s => s.id === currentId);
   return (
-    <div style={{ background:BASE.surface, borderBottom:`1px solid ${BASE.border}`, padding:"10px 12px" }}>
+    <div style={{ background:BASE.surface, borderBottom:`1px solid ${BASE.border}`, padding:"12px 12px 10px" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"center" }}>
-        {STEPS.map((s, i) => {
+        {STEPS.map((s,i) => {
           const done=i<idx, active=i===idx;
           return (
             <div key={s.id} style={{ display:"flex", alignItems:"center" }}>
               <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, padding:"0 6px" }}>
                 <div style={{
                   width:32, height:32, borderRadius:"50%",
-                  background: done ? BASE.green : active ? th.accent : BASE.border,
+                  background:done?BASE.green:active?th.accent:BASE.border,
                   display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
-                  boxShadow: active ? `0 0 0 3px ${th.accent}33` : "none",
-                  transition:"all .3s",
+                  boxShadow:active?`0 0 0 3px ${th.accent}33`:"none", transition:"all .3s",
                 }}>
                   {done
                     ? <span style={{ color:"white", fontWeight:900 }}>✓</span>
                     : <span style={{ filter:active?"none":"grayscale(1)", opacity:active?1:.4 }}>{s.emoji}</span>
                   }
                 </div>
-                <span style={{
-                  fontSize:8, fontWeight:700,
-                  color: done ? BASE.green : active ? th.accent : BASE.sub,
-                  whiteSpace:"nowrap",
-                }}>{s.title}</span>
+                <span style={{ fontSize:8, fontWeight:700, color:done?BASE.green:active?th.accent:BASE.sub, whiteSpace:"nowrap" }}>{s.title}</span>
               </div>
-              {i < STEPS.length-1 && (
-                <div style={{ width:20, height:2, borderRadius:1, background:i<idx?BASE.green:BASE.border, flexShrink:0, marginBottom:14 }} />
-              )}
+              {i<STEPS.length-1 && <div style={{ width:20, height:2, borderRadius:1, background:i<idx?BASE.green:BASE.border, flexShrink:0, marginBottom:14 }}/>}
             </div>
           );
         })}
       </div>
       <div style={{ height:3, background:BASE.border, borderRadius:2, marginTop:8 }}>
-        <div style={{
-          height:"100%", borderRadius:2,
-          background: th.accent,
-          width:`${(idx/(STEPS.length-1))*100}%`,
-          transition:"width .4s ease",
-        }} />
+        <div style={{ height:"100%", borderRadius:2, background:th.accent, width:`${(idx/(STEPS.length-1))*100}%`, transition:"width .4s ease" }}/>
       </div>
     </div>
   );
 }
 
 // ─── FIXED BOTTOM NAV ────────────────────────────────────────────────────────
+// 高さ：safe-area + 60px
 
 function BottomNav({ active, onChange, unreadCount, role }) {
   const th = THEME[role];
@@ -224,26 +169,20 @@ function BottomNav({ active, onChange, unreadCount, role }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:500,
-      background:BASE.surface,
-      borderTop:`1px solid ${BASE.border}`,
+      background:BASE.surface, borderTop:`1px solid ${BASE.border}`,
       paddingBottom:"env(safe-area-inset-bottom)",
     }}>
-      <div style={{ display:"flex", justifyContent:"space-around", padding:"8px 0 4px" }}>
+      <div style={{ display:"flex", justifyContent:"space-around", height:60, alignItems:"center" }}>
         {items.map(n => (
           <button key={n.id} onClick={()=>onChange(n.id)} className="tap-scale" style={{
             display:"flex", flexDirection:"column", alignItems:"center", gap:2,
             background:"none", border:"none", cursor:"pointer", fontFamily:"inherit",
-            color: active===n.id ? th.accent : BASE.sub,
-            padding:"4px 12px", position:"relative",
+            color:active===n.id?th.accent:BASE.sub, padding:"4px 14px", position:"relative",
           }}>
+            {active===n.id && <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:28, height:2.5, borderRadius:2, background:th.accent }}/>}
             <span style={{ fontSize:22 }}>{n.emoji}</span>
             <span style={{ fontSize:9, fontWeight:700 }}>{n.label}</span>
-            {n.badge>0 && (
-              <div style={{ position:"absolute", top:0, right:8, width:16, height:16, borderRadius:"50%", background:BASE.red, color:"white", fontSize:9, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center" }}>{n.badge}</div>
-            )}
-            {active===n.id && (
-              <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:24, height:2, borderRadius:1, background:th.accent }} />
-            )}
+            {n.badge>0 && <div style={{ position:"absolute", top:2, right:8, width:16, height:16, borderRadius:"50%", background:BASE.red, color:"white", fontSize:9, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center" }}>{n.badge}</div>}
           </button>
         ))}
       </div>
@@ -256,7 +195,7 @@ function BottomNav({ active, onChange, unreadCount, role }) {
 function Intake({ onNext, role }) {
   const th = THEME[role];
   const [title,setTitle]=useState(""); const [detail,setDetail]=useState(""); const [deadline,setDeadline]=useState(""); const [urgent,setUrgent]=useState(false);
-  const ok = title&&detail&&deadline;
+  const ok=title&&detail&&deadline;
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:12, animation:"slideUp .3s ease" }}>
       <Tile style={{ background:th.accentSoft }}>
@@ -264,11 +203,11 @@ function Intake({ onNext, role }) {
         <p style={{ fontSize:13, color:BASE.sub, margin:0 }}>上司から届いた指示をここに入力</p>
       </Tile>
       <Tile style={{ display:"flex", flexDirection:"column", gap:14 }}>
-        <div><Label>案件タイトル</Label><Inp placeholder="例：新規クライアント提案書の作成" value={title} onChange={e=>setTitle(e.target.value)} /></div>
-        <div><Label>上司からの指示内容</Label><Inp multiline placeholder="「〇〇をやっておいて」のような指示をそのまま…" value={detail} onChange={e=>setDetail(e.target.value)} /></div>
+        <div><Lbl>案件タイトル</Lbl><Inp placeholder="例：新規クライアント提案書の作成" value={title} onChange={e=>setTitle(e.target.value)}/></div>
+        <div><Lbl>上司からの指示内容</Lbl><Inp multiline placeholder="「〇〇をやっておいて」のような指示をそのまま…" value={detail} onChange={e=>setDetail(e.target.value)}/></div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-          <div><Label>希望期限</Label><Inp type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} /></div>
-          <div><Label>緊急度</Label>
+          <div><Lbl>希望期限</Lbl><Inp type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/></div>
+          <div><Lbl>緊急度</Lbl>
             <button onClick={()=>setUrgent(u=>!u)} className="tap-scale" style={{ width:"100%", padding:"13px 14px", borderRadius:12, border:`1.5px solid ${urgent?BASE.red:BASE.border}`, background:urgent?"#FFF0F0":BASE.bg, color:urgent?BASE.red:BASE.sub, fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>{urgent?"🚨 緊急":"⚡ 通常"}</button>
           </div>
         </div>
@@ -289,7 +228,6 @@ function Approval({ task, onNext, role }) {
         <p style={{ fontSize:13, color:BASE.sub, margin:"0 0 2px" }}>{task.title}</p>
         <p style={{ fontSize:12, color:BASE.sub, margin:0 }}>期限：{task.deadline}　{task.urgent&&<span style={{color:BASE.red,fontWeight:700}}>🚨 緊急</span>}</p>
       </Tile>
-
       {screen==="main" && (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           {[
@@ -305,11 +243,10 @@ function Approval({ task, onNext, role }) {
           ))}
         </div>
       )}
-
       {screen==="reason" && (
         <div>
           <Tile>
-            <Label>何が引っかかっていますか？</Label>
+            <Lbl>何が引っかかっていますか？</Lbl>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:4 }}>
               {REASONS.map(r=>(
                 <button key={r.id} onClick={()=>setReason(r)} className="tap-scale" style={{ padding:"14px 12px", borderRadius:14, border:`1.5px solid ${reason?.id===r.id?BASE.orange:BASE.border}`, background:reason?.id===r.id?"#FFF6EE":BASE.bg, cursor:"pointer", fontFamily:"inherit", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
@@ -329,20 +266,19 @@ function Approval({ task, onNext, role }) {
           {!reason && <p style={{ textAlign:"center", fontSize:12, color:BASE.sub, marginTop:12 }}>理由を一つ選ぶと次に進めます</p>}
         </div>
       )}
-
       {screen==="schedule" && (
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <Tile style={{ background:"#F5F0FF" }}>
-            <Label>📩 担当者への通知内容</Label>
+            <Lbl>📩 担当者への通知内容</Lbl>
             {[`理由：${reason?.text}`,`案件：${task.title}`,"カレンダーから候補日を自動提案"].map((t,i)=>(
               <p key={i} style={{ fontSize:13, color:BASE.text, margin:"4px 0" }}>• {t}</p>
             ))}
           </Tile>
           <Tile>
-            <Label>📅 候補日程（自動生成）</Label>
+            <Lbl>📅 候補日程（自動生成）</Lbl>
             {SLOTS.map(s=>(
               <div key={s.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 0", borderBottom:`1px solid ${BASE.border}` }}>
-                <div style={{ width:8,height:8,borderRadius:"50%",background:BASE.green,flexShrink:0 }} />
+                <div style={{ width:8,height:8,borderRadius:"50%",background:BASE.green,flexShrink:0 }}/>
                 <span style={{ fontSize:14, fontWeight:600 }}>{s.date}</span>
                 <span style={{ fontSize:13, color:BASE.sub, marginLeft:"auto" }}>{s.time}</span>
               </div>
@@ -367,11 +303,15 @@ function StaffView({ task, approval, onNext, role }) {
       <Tile style={{ background:AP.bg }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <span style={{ fontSize:36 }}>{AP.emoji}</span>
-          <div><div style={{ fontSize:20, fontWeight:900, color:AP.color }}>{AP.label}</div><div style={{ fontSize:13, color:BASE.sub, marginTop:2 }}>{task.title}</div><div style={{ fontSize:12, color:BASE.sub }}>期限：{task.deadline}</div></div>
+          <div>
+            <div style={{ fontSize:20, fontWeight:900, color:AP.color }}>{AP.label}</div>
+            <div style={{ fontSize:13, color:BASE.sub, marginTop:2 }}>{task.title}</div>
+            <div style={{ fontSize:12, color:BASE.sub }}>期限：{task.deadline}</div>
+          </div>
         </div>
       </Tile>
       <Tile>
-        <Label>案件の流れ</Label>
+        <Lbl>案件の流れ</Lbl>
         {STEPS.map((s,i)=>{
           const idx=STEPS.findIndex(x=>x.id==="staff_view"),done=i<idx,active=i===idx;
           return (
@@ -400,7 +340,7 @@ function Report({ task, onReset, role }) {
         <div style={{ fontSize:14, color:BASE.sub, marginTop:6 }}>{task?.title}</div>
       </Tile>
       <Tile>
-        <Label>成果サマリー</Label>
+        <Lbl>成果サマリー</Lbl>
         {[{label:"完了日",value:"2026年3月25日"},{label:"期限",value:task?.deadline??"—"},{label:"緊急案件",value:task?.urgent?"🚨 はい":"なし"},{label:"承認者",value:"上司（確認済み）"}].map((r,i,arr)=>(
           <div key={r.label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom:i<arr.length-1?`1px solid ${BASE.border}`:"none" }}>
             <span style={{ fontSize:13, color:BASE.sub }}>{r.label}</span>
@@ -421,21 +361,18 @@ function HomeScreen({ role }) {
   const [taskData,setTaskData]=useState({title:"",detail:"",deadline:"",urgent:false});
   const [approval,setApproval]=useState("approved");
   const [toast,setToast]=useState(null);
-
   const go=(next,payload)=>{
     const msgs={approval:"案件を受け付けました",staff_view:payload==="approved"?"承認されました！":payload==="talk"?"日程調整を開始します":"却下されました",report:"スタッフへ通知しました"};
     if(msgs[next]){setToast(msgs[next]);setTimeout(()=>setToast(null),2500);}
     if(next==="staff_view"&&payload)setApproval(payload);
     setStep(next);
   };
-
   const reset=()=>{ setStep("intake"); setTaskData({title:"",detail:"",deadline:"",urgent:false}); };
-
   return (
     <>
       {toast&&<Toast msg={toast} accent={th.accent}/>}
       <FlowStrip currentId={step} role={role}/>
-      <div style={{ padding:"16px 16px 16px" }}>
+      <div style={{ padding:"16px" }}>
         {step==="intake"     && <Intake     onNext={d=>{setTaskData(d);go("approval")}} role={role}/>}
         {step==="approval"   && <Approval   task={taskData} onNext={r=>go("staff_view",r)} role={role}/>}
         {step==="staff_view" && <StaffView  task={taskData} approval={approval} onNext={()=>go("report")} role={role}/>}
@@ -445,8 +382,7 @@ function HomeScreen({ role }) {
   );
 }
 
-function CasesScreen({ role }) {
-  const th = THEME[role];
+function CasesScreen() {
   const statusMap={completed:{label:"完了",color:BASE.green},active:{label:"進行中",color:BASE.orange}};
   const priorityMap={高:{bg:"#FFF0F0",color:BASE.red},中:{bg:"#FFF6EE",color:BASE.orange},低:{bg:"#F0FFF5",color:BASE.green}};
   return (
@@ -476,7 +412,7 @@ function CasesScreen({ role }) {
 }
 
 function NotifsScreen({ onRead, role }) {
-  const th = THEME[role];
+  const th=THEME[role];
   const [notifs,setNotifs]=useState(SAMPLE_NOTIFS);
   const readAll=()=>{ setNotifs(prev=>prev.map(n=>({...n,unread:false}))); onRead(); };
   return (
@@ -487,7 +423,10 @@ function NotifsScreen({ onRead, role }) {
       {notifs.map(n=>(
         <div key={n.id} style={{ background:n.unread?BASE.surface:"#F8F7F3", borderRadius:16, padding:"14px 16px", display:"flex", alignItems:"flex-start", gap:12, borderLeft:n.unread?`3px solid ${th.accent}`:"3px solid transparent" }}>
           <span style={{ fontSize:22, flexShrink:0 }}>{n.emoji}</span>
-          <div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:n.unread?700:500, lineHeight:1.5 }}>{n.text}</div><div style={{ fontSize:11, color:BASE.sub, marginTop:4 }}>{n.time}</div></div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:n.unread?700:500, lineHeight:1.5 }}>{n.text}</div>
+            <div style={{ fontSize:11, color:BASE.sub, marginTop:4 }}>{n.time}</div>
+          </div>
           {n.unread&&<div style={{ width:8,height:8,borderRadius:"50%",background:th.accent,flexShrink:0,marginTop:4 }}/>}
         </div>
       ))}
@@ -496,11 +435,10 @@ function NotifsScreen({ onRead, role }) {
 }
 
 function ProfileScreen({ role, onSwitch }) {
-  const th = THEME[role];
-  const isStaff = role==="staff";
+  const th=THEME[role];
+  const isStaff=role==="staff";
   return (
     <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:12 }}>
-      {/* プロフィールカード - ロール別カラー */}
       <Tile style={{ background:th.accentSoft, textAlign:"center", padding:"28px 20px" }}>
         <div style={{ width:72,height:72,borderRadius:"50%",background:th.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,margin:"0 auto 12px" }}>{th.emoji}</div>
         <div style={{ fontSize:18, fontWeight:900 }}>{isStaff?"田中 一郎":"山本 部長"}</div>
@@ -509,35 +447,31 @@ function ProfileScreen({ role, onSwitch }) {
           {th.emoji} {th.label}
         </div>
       </Tile>
-
       <Tile>
-        <Label>実績サマリー</Label>
+        <Lbl>実績サマリー</Lbl>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginTop:8 }}>
           {[{label:"完了案件",value:"12",color:BASE.green},{label:"進行中",value:"2",color:BASE.orange},{label:isStaff?"担当数":"承認数",value:"8",color:th.accent}].map(s=>(
-            <div key={s.label} style={{ textAlign:"center" }}><div style={{ fontSize:26, fontWeight:900, color:s.color }}>{s.value}</div><div style={{ fontSize:11, color:BASE.sub, marginTop:2 }}>{s.label}</div></div>
+            <div key={s.label} style={{ textAlign:"center" }}>
+              <div style={{ fontSize:26, fontWeight:900, color:s.color }}>{s.value}</div>
+              <div style={{ fontSize:11, color:BASE.sub, marginTop:2 }}>{s.label}</div>
+            </div>
           ))}
         </div>
       </Tile>
-
-      {/* ロール切り替え */}
       <Tile>
-        <Label>ロール切り替え</Label>
+        <Lbl>ロール切り替え</Lbl>
         <div style={{ display:"flex", gap:10, marginTop:8 }}>
-          {[
-            { id:"staff", label:"👤 スタッフ", th:THEME.staff },
-            { id:"boss",  label:"👔 上司",     th:THEME.boss  },
-          ].map(r=>(
+          {[{id:"staff",label:"👤 スタッフ",th:THEME.staff},{id:"boss",label:"👔 上司",th:THEME.boss}].map(r=>(
             <button key={r.id} onClick={()=>onSwitch(r.id)} className="tap-scale" style={{
               flex:1, padding:"14px", borderRadius:14,
               border:`1.5px solid ${role===r.id?r.th.accent:BASE.border}`,
-              background: role===r.id ? r.th.accent : BASE.bg,
-              color: role===r.id ? "white" : BASE.sub,
+              background:role===r.id?r.th.accent:BASE.bg,
+              color:role===r.id?"white":BASE.sub,
               fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
             }}>{r.label}</button>
           ))}
         </div>
       </Tile>
-
       <Tile style={{ padding:"8px 18px" }}>
         {[{emoji:"🔔",label:"通知設定"},{emoji:"🔒",label:"プライバシー"},{emoji:"❓",label:"ヘルプ"},{emoji:"📝",label:"利用規約"}].map((item,i,arr)=>(
           <div key={item.label} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 0", borderBottom:i<arr.length-1?`1px solid ${BASE.border}`:"none", cursor:"pointer" }}>
@@ -558,28 +492,21 @@ export default function App() {
   const [role,   setRole]   = useState("staff");
   const [unread, setUnread] = useState(2);
 
-  const th = THEME[role];
+  const switchRole = (r) => { if(typeof r==="string") setRole(r); else setRole(p=>p==="staff"?"boss":"staff"); };
+  const handleTab  = (t)  => { setTab(t); if(t==="notifs") setUnread(0); };
 
-  // ヘッダー高さ = safe-area + 54px
-  const HEADER_H = "calc(env(safe-area-inset-top) + 54px)";
-  // フッター高さ = safe-area + 56px
-  const FOOTER_H = "calc(env(safe-area-inset-bottom) + 56px)";
-
-  const switchRole = (r) => {
-    if (typeof r==="string") setRole(r);
-    else setRole(prev=>prev==="staff"?"boss":"staff");
-  };
-  const handleTab = (t) => { setTab(t); if(t==="notifs")setUnread(0); };
-
-  const tabTitles = { home:"ホーム", cases:"案件一覧", notifs:"通知", profile:"マイページ" };
+  // ヘッダー高さ = safe-area + 60px
+  // フッター高さ = safe-area + 60px
+  const HEADER_H = "calc(env(safe-area-inset-top) + 60px)";
+  const FOOTER_H = "calc(env(safe-area-inset-bottom) + 60px)";
 
   return (
-    <div style={{ height:"100vh", background:BASE.bg, overflow:"hidden", fontFamily:"'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif", transition:"background .3s" }}>
+    <div style={{ height:"100vh", background:BASE.bg, overflow:"hidden", fontFamily:"'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif" }}>
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
         input,textarea{color-scheme:light;-webkit-appearance:none;}
         textarea{resize:none;}
-        @keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .tap-scale:active{transform:scale(0.97);}
         ::-webkit-scrollbar{display:none;}
@@ -587,28 +514,27 @@ export default function App() {
       `}</style>
 
       {/* 固定ヘッダー */}
-      <AppHeader role={role} onSwitch={switchRole} tab={tab} />
+      <AppHeader role={role} onSwitch={switchRole}/>
 
-      {/* スクロールエリア */}
+      {/* スクロールエリア：ヘッダーとフッターの間 */}
       <div style={{
-        position:"absolute",
+        position:"fixed",
         top: HEADER_H,
         bottom: FOOTER_H,
         left:0, right:0,
         overflowY:"auto",
-        background: BASE.bg,
-        transition:"background .3s",
+        background:BASE.bg,
       }}>
-        <div key={`${tab}-${role}`} style={{ animation:"slideUp .25s ease", minHeight:"100%" }}>
-          {tab==="home"    && <HomeScreen    role={role} />}
-          {tab==="cases"   && <CasesScreen   role={role} />}
-          {tab==="notifs"  && <NotifsScreen  onRead={()=>setUnread(0)} role={role} />}
-          {tab==="profile" && <ProfileScreen role={role} onSwitch={switchRole} />}
+        <div key={`${tab}-${role}`} style={{ animation:"slideUp .25s ease", paddingBottom:16 }}>
+          {tab==="home"    && <HomeScreen    role={role}/>}
+          {tab==="cases"   && <CasesScreen/>}
+          {tab==="notifs"  && <NotifsScreen  onRead={()=>setUnread(0)} role={role}/>}
+          {tab==="profile" && <ProfileScreen role={role} onSwitch={switchRole}/>}
         </div>
       </div>
 
       {/* 固定フッター */}
-      <BottomNav active={tab} onChange={handleTab} unreadCount={unread} role={role} />
+      <BottomNav active={tab} onChange={handleTab} unreadCount={unread} role={role}/>
     </div>
   );
 }
