@@ -578,7 +578,7 @@ export default function App() {
   const handleTab  = (t) => { setTab(t); if (t==="notifs") setUnread(0); };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#D8D6CF", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", padding:"24px 0 40px", fontFamily:"'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:"#1A1A1A", fontFamily:"'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif" }}>
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
         input,textarea{color-scheme:light;-webkit-appearance:none;}
@@ -587,11 +587,23 @@ export default function App() {
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .tap-scale:active{transform:scale(0.97);}
         ::-webkit-scrollbar{display:none;}
+        html,body{background:#1A1A1A;}
       `}</style>
 
-      <div style={{ width:"100%", maxWidth:390, background:T.bg, borderRadius:44, overflow:"hidden", boxShadow:"0 32px 80px rgba(0,0,0,0.28), 0 0 0 10px #1A1A1A, 0 0 0 12px #333", minHeight:780, display:"flex", flexDirection:"column", position:"relative" }}>
-        <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:120, height:34, background:"#1A1A1A", borderRadius:"0 0 20px 20px", zIndex:200 }} />
-        <div style={{ paddingTop:34, flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+      <div style={{
+        position:"fixed", top:0, left:0, right:0, zIndex:9999,
+        height:"env(safe-area-inset-top)",
+        background:"#1A1A1A",
+      }} />
+
+      <div style={{
+        paddingTop:"env(safe-area-inset-top)",
+        paddingBottom:"env(safe-area-inset-bottom)",
+        minHeight:"100vh",
+        background:T.bg,
+        display:"flex", flexDirection:"column",
+      }}>
+        <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
           {tab==="home"    && <HomeScreen    role={role} onSwitch={switchRole} />}
           {tab==="cases"   && <CasesScreen />}
           {tab==="notifs"  && <NotifsScreen  onRead={()=>setUnread(0)} />}
