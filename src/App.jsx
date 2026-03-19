@@ -228,17 +228,23 @@ function Approval({ task, onNext, role }) {
     <div style={{ display:"flex", flexDirection:"column", gap:12, animation:"slideUp .3s ease" }}>
       <Tile style={{ background:th.accentSoft }}>
         <span style={{ fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20, background:th.accent, color:"white" }}>{th.emoji} {th.label}ビュー</span>
-        <p style={{ fontSize:21, fontWeight:900, margin:"8px 0 4px", color:th.accentText }}>どうしますか？</p>
+        <p style={{ fontSize:21, fontWeight:900, margin:"8px 0 4px", color:th.accentText }}>
+          {role==="boss" ? "誰に送りますか？" : "どうしますか？"}
+        </p>
         <p style={{ fontSize:13, color:BASE.sub, margin:"0 0 2px" }}>{task.title}</p>
         <p style={{ fontSize:12, color:BASE.sub, margin:0 }}>期限：{task.deadline}　{task.urgent&&<span style={{color:BASE.red,fontWeight:700}}>🚨 緊急</span>}</p>
       </Tile>
       {screen==="main" && (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {[
-            {emoji:"✅",label:"承認する",    sub:"このまま進めてOK",        color:BASE.green,  cb:()=>onNext("approved")},
-            {emoji:"❌",label:"却下する",    sub:"この案件はなしにする",     color:BASE.red,    cb:()=>onNext("rejected")},
-            {emoji:"🤔",label:"まだ思案中…", sub:"理由を伝えて担当者に返す", color:BASE.orange, cb:()=>setScreen("reason")},
-          ].map(b=>(
+          {(role==="boss" ? [
+            {emoji:"📤",label:"送る",         sub:"スタッフに仕事を割り当てる",   color:BASE.green,  cb:()=>onNext("approved")},
+            {emoji:"📌",label:"留めておく",   sub:"まだ割り当てない",             color:BASE.red,    cb:()=>onNext("rejected")},
+            {emoji:"💬",label:"相談する",     sub:"理由を伝えて担当者と話す",     color:BASE.orange, cb:()=>setScreen("reason")},
+          ] : [
+            {emoji:"✅",label:"承認する",    sub:"このまま進めてOK",             color:BASE.green,  cb:()=>onNext("approved")},
+            {emoji:"❌",label:"却下する",    sub:"この案件はなしにする",          color:BASE.red,    cb:()=>onNext("rejected")},
+            {emoji:"🤔",label:"まだ思案中…", sub:"理由を伝えて担当者に返す",      color:BASE.orange, cb:()=>setScreen("reason")},
+          ]).map(b=>(
             <button key={b.label} onClick={b.cb} className="tap-scale" style={{ display:"flex", alignItems:"center", gap:16, padding:"18px 18px", borderRadius:18, border:`1.5px solid ${b.color}33`, background:`${b.color}0D`, cursor:"pointer", fontFamily:"inherit", textAlign:"left", width:"100%" }}>
               <span style={{ fontSize:32 }}>{b.emoji}</span>
               <div><div style={{ fontSize:17, fontWeight:800, color:b.color }}>{b.label}</div><div style={{ fontSize:12, color:BASE.sub, marginTop:2 }}>{b.sub}</div></div>
