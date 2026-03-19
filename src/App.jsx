@@ -199,12 +199,16 @@ function Intake({ onNext, role }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:12, animation:"slideUp .3s ease" }}>
       <Tile style={{ background:th.accentSoft }}>
-        <p style={{ fontSize:22, fontWeight:900, margin:"0 0 4px", color:th.accentText }}>📥 案件を受け取る</p>
-        <p style={{ fontSize:13, color:BASE.sub, margin:0 }}>上司から届いた指示をここに入力</p>
+        <p style={{ fontSize:22, fontWeight:900, margin:"0 0 4px", color:th.accentText }}>
+          {role==="boss" ? "📤 仕事を振る" : "📥 案件を受け取る"}
+        </p>
+        <p style={{ fontSize:13, color:BASE.sub, margin:0 }}>
+          {role==="boss" ? "スタッフに割り振る仕事を入力してください" : "上司から届いた指示をここに入力"}
+        </p>
       </Tile>
       <Tile style={{ display:"flex", flexDirection:"column", gap:14 }}>
-        <div><Lbl>案件タイトル</Lbl><Inp placeholder="例：新規クライアント提案書の作成" value={title} onChange={e=>setTitle(e.target.value)}/></div>
-        <div><Lbl>上司からの指示内容</Lbl><Inp multiline placeholder="「〇〇をやっておいて」のような指示をそのまま…" value={detail} onChange={e=>setDetail(e.target.value)}/></div>
+        <div><Lbl>{role==="boss"?"仕事のタイトル":"案件タイトル"}</Lbl><Inp placeholder={role==="boss"?"例：提案書作成をお願いしたい":"例：新規クライアント提案書の作成"} value={title} onChange={e=>setTitle(e.target.value)}/></div>
+        <div><Lbl>{role==="boss"?"指示内容・やってほしいこと":"上司からの指示内容"}</Lbl><Inp multiline placeholder={role==="boss"?"スタッフへの指示内容を入力…":"「〇〇をやっておいて」のような指示をそのまま…"} value={detail} onChange={e=>setDetail(e.target.value)}/></div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           <div><Lbl>希望期限</Lbl><Inp type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/></div>
           <div><Lbl>緊急度</Lbl>
@@ -212,7 +216,7 @@ function Intake({ onNext, role }) {
           </div>
         </div>
       </Tile>
-      <TapBtn color={th.accent} disabled={!ok} onClick={()=>onNext({title,detail,deadline,urgent})}>{ok?"上司の承認へ →":"全項目を入力してください"}</TapBtn>
+      <TapBtn color={th.accent} disabled={!ok} onClick={()=>onNext({title,detail,deadline,urgent})}>{ok ? (role==="boss" ? "スタッフに振る →" : "上司の承認へ →") : "全項目を入力してください"}</TapBtn>
     </div>
   );
 }
@@ -348,7 +352,7 @@ function Report({ task, onReset, role }) {
           </div>
         ))}
       </Tile>
-      <TapBtn color={th.accent} onClick={onReset}>新しい案件を受け取る +</TapBtn>
+      <TapBtn color={th.accent} onClick={onReset}>{role==="boss"?"新しい仕事を振る +":"新しい案件を受け取る +"}</TapBtn>
     </div>
   );
 }
