@@ -127,7 +127,7 @@ function Toast({ msg, accent }) {
 
 // ─── FIXED HEADER ────────────────────────────────────────────────────────────
 
-function AppHeader({ role, onSwitch }) {
+function AppHeader({ role }) {
   const th = THEME[role];
   return (
     <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:500, background:th.headerBg, paddingTop:"env(safe-area-inset-top)" }}>
@@ -136,15 +136,14 @@ function AppHeader({ role, onSwitch }) {
           <div style={{ fontSize:17, fontWeight:900, color:"white", letterSpacing:"-.3px" }}>WorkFlow OS</div>
           <div style={{ fontSize:11, color:"rgba(255,255,255,0.55)", marginTop:1 }}>案件管理システム</div>
         </div>
-        <button onClick={onSwitch} className="tap-scale" style={{
+        <div style={{
           display:"flex", alignItems:"center", gap:8,
-          background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.35)",
-          borderRadius:24, padding:"8px 14px", cursor:"pointer", fontFamily:"inherit",
+          background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.3)",
+          borderRadius:24, padding:"7px 14px",
         }}>
-          <span style={{ fontSize:16 }}>{th.emoji}</span>
+          <span style={{ fontSize:15 }}>{th.emoji}</span>
           <span style={{ fontSize:13, fontWeight:800, color:"white" }}>{th.label}</span>
-          <span style={{ fontSize:10, fontWeight:700, background:"rgba(255,255,255,0.25)", color:"white", padding:"1px 7px", borderRadius:10 }}>切替</span>
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -262,30 +261,42 @@ function PresidentLock({ onUnlock }) {
 
 // ─── PRESIDENT DASHBOARD ─────────────────────────────────────────────────────
 
-function PresidentDashboard() {
+function PresidentDashboard({ onExit }) {
   const [selected, setSelected] = useState(null);
 
-  // 全体サマリー
   const totalPending = BOSS_METRICS.reduce((a,b)=>a+b.pending, 0);
   const avgScore     = Math.round(BOSS_METRICS.reduce((a,b)=>a+b.score,0) / BOSS_METRICS.length);
   const sorted       = [...BOSS_METRICS].sort((a,b)=>b.score-a.score);
 
-  // 放置案件アラート（思案中が5日以上）
-  const staleBosses = BOSS_METRICS.filter(b => b.pendingDays.some(d=>d>=5));
+  // 放置案件一覧（思案中が3日以上のもの）
+  const pendingList = BOSS_METRICS.flatMap(b =>
+    b.pendingDays
+      .filter(d => d >= 3)
+      .map((d, i) => ({ boss:b.name, dept:b.dept, days:d, id:`${b.id}-${i}` }))
+  ).sort((a,b) => b.days - a.days);
 
   return (
     <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:14 }}>
 
-      {/* サマリーバナー */}
+      {/* ヘッダー */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div>
+          <div style={{ fontSize:20, fontWeight:900, color:BASE.text }}>👑 社長ダッシュボード</div>
+          <div style={{ fontSize:12, color:BASE.sub, marginTop:2 }}>上司の判断力を分析しています</div>
+        </div>
+        <button onClick={onExit} style={{ fontSize:12, color:BASE.sub, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit" }}>← 戻る</button>
+      </div>
+
+      {/* 組織スコアバナー */}
       <Tile style={{ background:"linear-gradient(135deg,#1E1035,#3B0764)", padding:"22px 20px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
           <div>
-            <div style={{ fontSize:13, color:"rgba(255,255,255,0.6)", fontWeight:700 }}>組織の判断力スコア</div>
-            <div style={{ fontSize:42, fontWeight:900, color:"white", lineHeight:1 }}>{avgScore}<span style={{ fontSize:16, color:"rgba(255,255,255,0.6)" }}>/100</span></div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", fontWeight:700 }}>組織の判断力スコア</div>
+            <div style={{ fontSize:42, fontWeight:900, color:"white", lineHeight:1 }}>{avgScore}<span style={{ fontSize:16, color:"rgba(255,255,255,0.5)" }}>/100</span></div>
           </div>
           <div style={{ textAlign:"right" }}>
-            <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>放置案件</div>
-            <div style={{ fontSize:28, fontWeight:900, color: totalPending>5?BASE.red:"#81C784" }}>{totalPending}件</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)" }}>放置案件</div>
+            <div style={{ fontSize:30, fontWeight:900, color:totalPending>5?BASE.red:"#81C784" }}>{totalPending}件</div>
           </div>
         </div>
         <div style={{ height:6, background:"rgba(255,255,255,0.15)", borderRadius:3 }}>
@@ -293,118 +304,155 @@ function PresidentDashboard() {
         </div>
       </Tile>
 
-      {/* 放置アラート */}
-      {staleBosses.length > 0 && (
-        <Tile style={{ background:"#FFF0F0", borderLeft:`4px solid ${BASE.red}` }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
-            <span style={{ fontSize:18 }}>🚨</span>
-            <span style={{ fontSize:14, fontWeight:800, color:BASE.red }}>放置アラート</span>
-          </div>
-          {staleBosses.map(b=>(
-            <div key={b.id} style={{ fontSize:13, color:BASE.text, marginBottom:4 }}>
-              <strong>{b.name}</strong> — {b.pendingDays.filter(d=>d>=5).length}件が5日以上放置中
-            </div>
-          ))}
-        </Tile>
-      )}
-
-      {/* 上司ランキング */}
-      <div>
-        <Lbl>上司の判断力ランキング</Lbl>
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {sorted.map((b,i)=>{
+      {/* ─── 承認・却下・思案中の比率グラフ ─── */}
+      <Tile>
+        <Lbl>承認 / 却下 / 思案中 の比率（上司別）</Lbl>
+        <div style={{ display:"flex", flexDirection:"column", gap:14, marginTop:8 }}>
+          {sorted.map(b => {
+            const total = b.total;
+            const aR = Math.round(b.approved/total*100);
+            const rR = Math.round(b.rejected/total*100);
+            const pR = Math.round(b.pending/total*100);
             const grade = getGrade(b.score);
-            const approveRate = Math.round(b.approved/b.total*100);
-            const rejectRate  = Math.round(b.rejected/b.total*100);
-            const pendingRate = Math.round(b.pending/b.total*100);
-            const isOpen = selected===b.id;
-
             return (
               <div key={b.id}>
-                <button onClick={()=>setSelected(isOpen?null:b.id)} className="tap-scale" style={{
-                  width:"100%", background:BASE.surface, borderRadius:16,
-                  padding:"16px 18px", border:`1.5px solid ${isOpen?grade.color:BASE.border}`,
-                  cursor:"pointer", fontFamily:"inherit", textAlign:"left",
-                  transition:"all .2s",
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+                  <div>
+                    <span style={{ fontSize:13, fontWeight:800 }}>{b.name}</span>
+                    <span style={{ fontSize:11, color:BASE.sub, marginLeft:6 }}>{b.dept}</span>
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:900, color:grade.color, background:grade.bg, padding:"2px 10px", borderRadius:10 }}>{grade.label}</span>
+                </div>
+                {/* 横積みバー */}
+                <div style={{ display:"flex", height:14, borderRadius:7, overflow:"hidden", gap:2 }}>
+                  <div style={{ width:`${aR}%`, background:BASE.green, display:"flex", alignItems:"center", justifyContent:"center", transition:"width .5s" }}>
+                    {aR>10&&<span style={{ fontSize:9, color:"white", fontWeight:700 }}>{aR}%</span>}
+                  </div>
+                  <div style={{ width:`${rR}%`, background:BASE.red, display:"flex", alignItems:"center", justifyContent:"center", transition:"width .5s" }}>
+                    {rR>10&&<span style={{ fontSize:9, color:"white", fontWeight:700 }}>{rR}%</span>}
+                  </div>
+                  <div style={{ width:`${pR}%`, background:BASE.orange, display:"flex", alignItems:"center", justifyContent:"center", transition:"width .5s" }}>
+                    {pR>10&&<span style={{ fontSize:9, color:"white", fontWeight:700 }}>{pR}%</span>}
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:10, marginTop:4 }}>
+                  {[
+                    {label:"承認",value:b.approved,color:BASE.green},
+                    {label:"却下",value:b.rejected,color:BASE.red},
+                    {label:"思案中",value:b.pending,color:BASE.orange},
+                  ].map(s=>(
+                    <div key={s.label} style={{ display:"flex", alignItems:"center", gap:3 }}>
+                      <div style={{ width:7,height:7,borderRadius:"50%",background:s.color }}/>
+                      <span style={{ fontSize:10, color:BASE.sub }}>{s.label} <strong style={{ color:s.color }}>{s.value}</strong></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {/* 凡例 */}
+        <div style={{ display:"flex", gap:12, marginTop:14, paddingTop:12, borderTop:`1px solid ${BASE.border}`, flexWrap:"wrap" }}>
+          {[{label:"承認",color:BASE.green},{label:"却下",color:BASE.red},{label:"思案中（保留）",color:BASE.orange}].map(l=>(
+            <div key={l.label} style={{ display:"flex", alignItems:"center", gap:5 }}>
+              <div style={{ width:12, height:12, borderRadius:3, background:l.color }}/>
+              <span style={{ fontSize:11, color:BASE.sub }}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </Tile>
+
+      {/* ─── 放置案件一覧 ─── */}
+      <Tile style={{ borderLeft:`4px solid ${BASE.orange}` }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+          <span style={{ fontSize:18 }}>⏰</span>
+          <div>
+            <div style={{ fontSize:15, fontWeight:800, color:BASE.text }}>思案中のまま放置している案件</div>
+            <div style={{ fontSize:11, color:BASE.sub }}>3日以上保留中 · {pendingList.length}件</div>
+          </div>
+        </div>
+        {pendingList.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"16px", color:BASE.green, fontSize:13, fontWeight:700 }}>✅ 放置案件なし</div>
+        ) : (
+          pendingList.map((p,i) => {
+            const urgency = p.days >= 10 ? { color:BASE.red, label:"緊急" } : p.days >= 7 ? { color:BASE.orange, label:"注意" } : { color:BASE.sub, label:"確認" };
+            return (
+              <div key={p.id} style={{
+                display:"flex", alignItems:"center", gap:12,
+                padding:"10px 0",
+                borderBottom: i<pendingList.length-1 ? `1px solid ${BASE.border}` : "none",
+              }}>
+                <div style={{
+                  width:40, height:40, borderRadius:10, flexShrink:0,
+                  background:`${urgency.color}15`,
+                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
                 }}>
+                  <div style={{ fontSize:16, fontWeight:900, color:urgency.color, lineHeight:1 }}>{p.days}</div>
+                  <div style={{ fontSize:8, color:urgency.color, fontWeight:700 }}>日</div>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:BASE.text }}>{p.boss}</div>
+                  <div style={{ fontSize:11, color:BASE.sub }}>{p.dept}</div>
+                </div>
+                <span style={{
+                  fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:20,
+                  background:`${urgency.color}15`, color:urgency.color,
+                }}>{urgency.label}</span>
+              </div>
+            );
+          })
+        )}
+      </Tile>
+
+      {/* 上司ランキング（詳細） */}
+      <div>
+        <Lbl>上司の総合ランキング</Lbl>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {sorted.map((b,i)=>{
+            const grade=getGrade(b.score);
+            const isOpen=selected===b.id;
+            return (
+              <div key={b.id}>
+                <button onClick={()=>setSelected(isOpen?null:b.id)} className="tap-scale" style={{ width:"100%", background:BASE.surface, borderRadius:16, padding:"16px 18px", border:`1.5px solid ${isOpen?grade.color:BASE.border}`, cursor:"pointer", fontFamily:"inherit", textAlign:"left", transition:"all .2s" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-                    {/* 順位 */}
                     <div style={{ fontSize:20, fontWeight:900, color:i===0?"#F59E0B":i===1?"#9CA3AF":i===2?"#B45309":BASE.sub, minWidth:24, textAlign:"center" }}>
                       {i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}`}
                     </div>
-
-                    {/* 名前 */}
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:15, fontWeight:800, color:BASE.text }}>{b.name}</div>
+                      <div style={{ fontSize:15, fontWeight:800 }}>{b.name}</div>
                       <div style={{ fontSize:11, color:BASE.sub, marginTop:1 }}>{b.dept}</div>
                     </div>
-
-                    {/* グレード */}
-                    <div style={{ textAlign:"center" }}>
-                      <div style={{ fontSize:28, fontWeight:900, color:grade.color, background:grade.bg, width:44, height:44, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center" }}>{grade.label}</div>
-                    </div>
-
+                    <div style={{ fontSize:26, fontWeight:900, color:grade.color, background:grade.bg, width:44, height:44, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center" }}>{grade.label}</div>
                     <span style={{ fontSize:16, color:BASE.border }}>{isOpen?"▲":"▼"}</span>
                   </div>
                 </button>
-
-                {/* 詳細パネル */}
                 {isOpen && (
                   <div style={{ background:grade.bg, borderRadius:"0 0 16px 16px", padding:"16px 18px", border:`1.5px solid ${grade.color}`, borderTop:"none", marginTop:-4 }}>
-
-                    {/* スコアゲージ */}
-                    <div style={{ marginBottom:16 }}>
+                    <div style={{ marginBottom:12 }}>
                       <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:BASE.sub, marginBottom:6 }}>
                         <span>判断力スコア</span>
                         <span style={{ fontWeight:800, color:grade.color }}>{b.score} / 100</span>
                       </div>
                       <div style={{ height:8, background:"rgba(0,0,0,0.08)", borderRadius:4 }}>
-                        <div style={{ height:"100%", borderRadius:4, background:grade.color, width:`${b.score}%`, transition:"width .5s ease" }}/>
+                        <div style={{ height:"100%", borderRadius:4, background:grade.color, width:`${b.score}%`, transition:"width .5s" }}/>
                       </div>
                     </div>
-
-                    {/* 承認・却下・放置バー */}
-                    <div style={{ marginBottom:16 }}>
-                      <div style={{ fontSize:12, color:BASE.sub, marginBottom:6 }}>判断の内訳（全{b.total}件）</div>
-                      <div style={{ display:"flex", height:12, borderRadius:6, overflow:"hidden", gap:2 }}>
-                        <div style={{ width:`${approveRate}%`, background:BASE.green, transition:"width .5s" }}/>
-                        <div style={{ width:`${rejectRate}%`,  background:BASE.red,   transition:"width .5s" }}/>
-                        <div style={{ width:`${pendingRate}%`, background:BASE.orange,transition:"width .5s" }}/>
-                      </div>
-                      <div style={{ display:"flex", gap:12, marginTop:6 }}>
-                        {[
-                          { label:"承認",   value:b.approved, color:BASE.green  },
-                          { label:"却下",   value:b.rejected, color:BASE.red    },
-                          { label:"保留中", value:b.pending,  color:BASE.orange },
-                        ].map(s=>(
-                          <div key={s.label} style={{ display:"flex", alignItems:"center", gap:4 }}>
-                            <div style={{ width:8, height:8, borderRadius:"50%", background:s.color }}/>
-                            <span style={{ fontSize:11, color:BASE.sub }}>{s.label}</span>
-                            <span style={{ fontSize:12, fontWeight:800, color:s.color }}>{s.value}件</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 平均決断日数 */}
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
                       <div style={{ background:BASE.surface, borderRadius:12, padding:"12px 14px", textAlign:"center" }}>
-                        <div style={{ fontSize:24, fontWeight:900, color: b.avgDays<=2?BASE.green:b.avgDays<=4?BASE.orange:BASE.red }}>{b.avgDays}日</div>
+                        <div style={{ fontSize:22, fontWeight:900, color:b.avgDays<=2?BASE.green:b.avgDays<=4?BASE.orange:BASE.red }}>{b.avgDays}日</div>
                         <div style={{ fontSize:11, color:BASE.sub, marginTop:2 }}>平均決断スピード</div>
                       </div>
                       <div style={{ background:BASE.surface, borderRadius:12, padding:"12px 14px", textAlign:"center" }}>
-                        <div style={{ fontSize:24, fontWeight:900, color:b.pending===0?BASE.green:b.pending<=2?BASE.orange:BASE.red }}>{b.pending}件</div>
+                        <div style={{ fontSize:22, fontWeight:900, color:b.pending===0?BASE.green:b.pending<=2?BASE.orange:BASE.red }}>{b.pending}件</div>
                         <div style={{ fontSize:11, color:BASE.sub, marginTop:2 }}>現在の保留中</div>
                       </div>
                     </div>
-
-                    {/* 診断コメント */}
-                    <div style={{ marginTop:12, padding:"12px 14px", background:BASE.surface, borderRadius:12, fontSize:13, color:BASE.text, lineHeight:1.7 }}>
-                      {b.score>=85 && "✅ 優秀な判断力。承認・却下ともに迅速で明確です。組織の模範となっています。"}
-                      {b.score>=70 && b.score<85 && "👍 安定した判断力。保留案件も少なく、スタッフへの影響も最小限です。"}
+                    <div style={{ padding:"12px 14px", background:BASE.surface, borderRadius:12, fontSize:13, color:BASE.text, lineHeight:1.7 }}>
+                      {b.score>=85 && "✅ 優秀な判断力。承認・却下ともに迅速で明確。組織の模範です。"}
+                      {b.score>=70 && b.score<85 && "👍 安定した判断力。保留案件も少なく影響は最小限です。"}
                       {b.score>=50 && b.score<70 && "⚠️ 概ね良好ですが、保留案件の処理を速めると更に向上します。"}
-                      {b.score>=30 && b.score<50 && "🔴 保留案件が多く、スタッフの業務が滞るリスクがあります。改善が必要です。"}
-                      {b.score<30  && "🚨 判断の遅延と放置が常態化しています。役職の機能を果たしていない状態です。即時改善が必要です。"}
+                      {b.score>=30 && b.score<50 && "🔴 保留案件が多く、スタッフの業務が滞るリスクがあります。"}
+                      {b.score<30  && "🚨 判断の遅延・放置が常態化。役職の機能を果たしていない状態です。即時改善が必要です。"}
                     </div>
                   </div>
                 )}
@@ -414,35 +462,17 @@ function PresidentDashboard() {
         </div>
       </div>
 
-      {/* 評価基準説明 */}
-      <Tile style={{ background:"#F8F7FF" }}>
-        <Lbl>📐 スコアの算出基準</Lbl>
-        {[
-          { grade:"S (85〜)", desc:"即決率が高く、保留ゼロ。判断が明確" },
-          { grade:"A (70〜)", desc:"保留少なく決断スピードも速い"        },
-          { grade:"B (50〜)", desc:"普通。保留が散見されるが許容範囲"    },
-          { grade:"C (30〜)", desc:"保留が多く、決断に時間がかかる"      },
-          { grade:"D (〜29)", desc:"放置・先送りが常態化。要改善"        },
-        ].map((r,i,arr)=>{
-          const g = getGrade(parseInt(r.grade));
-          return (
-            <div key={r.grade} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:i<arr.length-1?`1px solid ${BASE.border}`:"none" }}>
-              <span style={{ fontSize:14, fontWeight:900, color:g.color, minWidth:60 }}>{r.grade}</span>
-              <span style={{ fontSize:12, color:BASE.sub }}>{r.desc}</span>
-            </div>
-          );
-        })}
-      </Tile>
-
     </div>
   );
 }
 
 // ─── PRESIDENT SCREEN ────────────────────────────────────────────────────────
 
-function PresidentScreen() {
+function PresidentScreen({ onExit }) {
   const [unlocked, setUnlocked] = useState(false);
-  return unlocked ? <PresidentDashboard/> : <PresidentLock onUnlock={()=>setUnlocked(true)}/>;
+  return unlocked
+    ? <PresidentDashboard onExit={onExit}/>
+    : <PresidentLock onUnlock={()=>setUnlocked(true)}/>;
 }
 
 // ─── WORKFLOW VIEWS ───────────────────────────────────────────────────────────
@@ -614,11 +644,10 @@ function Report({ task, onReset, role }) {
 
 // ─── TAB SCREENS ─────────────────────────────────────────────────────────────
 
-function HomeScreen({ role }) {
+function HomeScreen({ role, onSwitch }) {
   const th = THEME[role];
 
-  // 社長は専用ダッシュボードを表示
-  if (role==="president") return <PresidentScreen/>;
+  if (role==="president") return <PresidentScreen onExit={()=>onSwitch&&onSwitch("staff")}/>;
 
   const [step,setStep]=useState("intake");
   const [taskData,setTaskData]=useState({title:"",detail:"",deadline:"",urgent:false});
@@ -690,38 +719,88 @@ function NotifsScreen({ onRead, role }) {
   );
 }
 
+// パスコード設定
+const PASSCODES = {
+  staff:     "1111",
+  boss:      "2222",
+  president: "3333",
+};
+
 function ProfileScreen({ role, onSwitch }) {
-  const th=THEME[role];
-  const nameMap={staff:"田中 一郎",boss:"山本 部長",president:"代表取締役社長"};
-  const deptMap={staff:"マーケティング部",boss:"マーケティング部　部長",president:"経営本部"};
+  const th = THEME[role];
+  const nameMap     = { staff:"田中 一郎", boss:"山本 部長", president:"代表取締役社長" };
+  const deptMap     = { staff:"マーケティング部", boss:"マーケティング部　部長", president:"経営本部" };
+
+  const [showModal, setShowModal] = useState(false);
+  const [targetRole, setTargetRole] = useState(null);
+  const [code, setCode]   = useState("");
+  const [err,  setErr]    = useState(false);
+
+  const openModal = (r) => { setTargetRole(r); setCode(""); setErr(false); setShowModal(true); };
+  const closeModal = () => { setShowModal(false); setTargetRole(null); setCode(""); setErr(false); };
+
+  const trySwitch = () => {
+    if (code === PASSCODES[targetRole]) {
+      onSwitch(targetRole);
+      closeModal();
+    } else {
+      setErr(true);
+      setCode("");
+      setTimeout(()=>setErr(false), 1500);
+    }
+  };
+
+  const roles = [
+    { id:"staff",     label:"スタッフ", emoji:"👤", th:THEME.staff     },
+    { id:"boss",      label:"上司",     emoji:"👔", th:THEME.boss      },
+    { id:"president", label:"経営者",   emoji:"👑", th:THEME.president },
+  ];
+
   return (
     <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:12 }}>
+
+      {/* プロフィールカード */}
       <Tile style={{ background:th.accentSoft, textAlign:"center", padding:"28px 20px" }}>
-        <div style={{ width:72,height:72,borderRadius:"50%",background:th.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,margin:"0 auto 12px" }}>{th.emoji}</div>
+        <div style={{ width:72, height:72, borderRadius:"50%", background:th.accent, display:"flex", alignItems:"center", justifyContent:"center", fontSize:36, margin:"0 auto 12px" }}>
+          {th.emoji}
+        </div>
         <div style={{ fontSize:18, fontWeight:900 }}>{nameMap[role]}</div>
         <div style={{ fontSize:13, color:BASE.sub, marginTop:4 }}>{deptMap[role]}</div>
         <div style={{ marginTop:10, display:"inline-flex", alignItems:"center", gap:6, padding:"5px 14px", borderRadius:20, background:th.accent, color:"white", fontSize:12, fontWeight:700 }}>
           {th.emoji} {th.label}
         </div>
       </Tile>
+
+      {/* ロール切り替え（パスコード） */}
       <Tile>
-        <Lbl>ロール切り替え</Lbl>
-        <div style={{ display:"flex", gap:8, marginTop:8, flexWrap:"wrap" }}>
-          {[
-            {id:"staff",     label:"👤 スタッフ", th:THEME.staff     },
-            {id:"boss",      label:"👔 上司",      th:THEME.boss      },
-            {id:"president", label:"👑 社長",      th:THEME.president },
-          ].map(r=>(
-            <button key={r.id} onClick={()=>onSwitch(r.id)} className="tap-scale" style={{
-              flex:1, minWidth:80, padding:"12px 8px", borderRadius:14,
+        <Lbl>🔐 ロール切り替え（パスコード認証）</Lbl>
+        <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:8 }}>
+          {roles.map(r => (
+            <button key={r.id} onClick={()=>r.id!==role&&openModal(r.id)} className={r.id!==role?"tap-scale":""} style={{
+              display:"flex", alignItems:"center", gap:14,
+              padding:"14px 16px", borderRadius:14,
               border:`1.5px solid ${role===r.id?r.th.accent:BASE.border}`,
-              background:role===r.id?r.th.accent:BASE.bg,
-              color:role===r.id?"white":BASE.sub,
-              fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
-            }}>{r.label}</button>
+              background: role===r.id ? r.th.accentSoft : BASE.bg,
+              cursor: role===r.id ? "default" : "pointer",
+              fontFamily:"inherit", textAlign:"left", width:"100%",
+              opacity: 1,
+            }}>
+              <span style={{ fontSize:24 }}>{r.emoji}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:14, fontWeight:800, color: role===r.id ? r.th.accentText : BASE.text }}>{r.label}</div>
+                <div style={{ fontSize:11, color:BASE.sub, marginTop:1 }}>
+                  {role===r.id ? "✓ 現在のロール" : "タップしてパスコードで切り替え"}
+                </div>
+              </div>
+              {role===r.id
+                ? <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:r.th.accent, color:"white" }}>使用中</span>
+                : <span style={{ fontSize:16, color:BASE.border }}>🔒</span>
+              }
+            </button>
           ))}
         </div>
       </Tile>
+
       <Tile style={{ padding:"8px 18px" }}>
         {[{emoji:"🔔",label:"通知設定"},{emoji:"🔒",label:"プライバシー"},{emoji:"❓",label:"ヘルプ"},{emoji:"📝",label:"利用規約"}].map((item,i,arr)=>(
           <div key={item.label} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 0", borderBottom:i<arr.length-1?`1px solid ${BASE.border}`:"none", cursor:"pointer" }}>
@@ -731,6 +810,58 @@ function ProfileScreen({ role, onSwitch }) {
           </div>
         ))}
       </Tile>
+
+      {/* パスコードモーダル */}
+      {showModal && targetRole && (
+        <div style={{
+          position:"fixed", inset:0, zIndex:1000,
+          background:"rgba(0,0,0,0.5)",
+          display:"flex", alignItems:"flex-end", justifyContent:"center",
+          animation:"fadeIn .2s ease",
+        }} onClick={e=>e.target===e.currentTarget&&closeModal()}>
+          <div style={{
+            width:"100%", maxWidth:420,
+            background:BASE.surface, borderRadius:"20px 20px 0 0",
+            padding:"20px 20px calc(20px + env(safe-area-inset-bottom))",
+            animation:"slideUp .25s ease",
+          }}>
+            {/* ヘッダー */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+              <span style={{ fontSize:28 }}>{THEME[targetRole].emoji}</span>
+              <div>
+                <div style={{ fontSize:16, fontWeight:900 }}>{roles.find(r=>r.id===targetRole)?.label}として入室</div>
+                <div style={{ fontSize:12, color:BASE.sub }}>パスコードを入力してください</div>
+              </div>
+              <button onClick={closeModal} style={{ marginLeft:"auto", background:"none", border:"none", fontSize:20, color:BASE.sub, cursor:"pointer", padding:4 }}>✕</button>
+            </div>
+
+            <input
+              type="password"
+              value={code}
+              onChange={e=>setCode(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&trySwitch()}
+              placeholder="••••"
+              maxLength={8}
+              autoFocus
+              style={{
+                width:"100%", padding:"12px 14px", borderRadius:12, textAlign:"center",
+                border:`2px solid ${err?BASE.red:THEME[targetRole].accent}`,
+                background:err?"#FFF0F0":BASE.bg,
+                fontSize:24, letterSpacing:8, fontFamily:"inherit", outline:"none",
+                color:err?BASE.red:BASE.text, marginBottom:6, transition:"all .2s",
+              }}
+            />
+            <p style={{ textAlign:"center", fontSize:11, color:err?BASE.red:BASE.sub, fontWeight:err?700:400, margin:"0 0 14px" }}>
+              {err?"パスコードが違います":"デモ用：スタッフ 1111 / 上司 2222 / 経営者 3333"}
+            </p>
+
+            <div style={{ display:"flex", gap:8 }}>
+              <TapBtn color={BASE.sub} outline onClick={closeModal}>キャンセル</TapBtn>
+              <TapBtn color={THEME[targetRole].accent} disabled={code.length===0} onClick={trySwitch}>入室 →</TapBtn>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -761,11 +892,11 @@ export default function App() {
         html,body{background:#F5F4F0;height:100%;}
       `}</style>
 
-      <AppHeader role={role} onSwitch={switchRole}/>
+      <AppHeader role={role}/>
 
       <div style={{ position:"fixed", top:HEADER_H, bottom:FOOTER_H, left:0, right:0, overflowY:"auto", background:BASE.bg }}>
-        <div key={`${tab}-${role}`} style={{ animation:"slideUp .25s ease", paddingBottom:16 }}>
-          {tab==="home"    && <HomeScreen    role={role}/>}
+        <div key={`${tab}-${role}`} style={{ animation:"slideUp .25s ease", paddingBottom:32 }}>
+          {tab==="home"    && <HomeScreen    role={role} onSwitch={switchRole}/>}
           {tab==="cases"   && <CasesScreen/>}
           {tab==="notifs"  && <NotifsScreen  onRead={()=>setUnread(0)} role={role}/>}
           {tab==="profile" && <ProfileScreen role={role} onSwitch={switchRole}/>}
