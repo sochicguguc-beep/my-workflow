@@ -2,7 +2,7 @@ import { useState } from "react";
 
 // ─── THEMES ──────────────────────────────────────────────────────────────────
 const THEME = {
-  staff:     { accent:"#0066FF", accentSoft:"#E8F0FF", accentText:"#0044CC", headerBg:"#0066FF",  label:"スタッフ", emoji:"👤" },
+  staff:     { accent:"#0066FF", accentSoft:"#E8F0FF", accentText:"#0044CC", headerBg:"#003FA3",  label:"スタッフ", emoji:"👤" },
   boss:      { accent:"#B45309", accentSoft:"#FFF7ED", accentText:"#92400E", headerBg:"#1C1917",  label:"上司",     emoji:"👔" },
   president: { accent:"#7C3AED", accentSoft:"#F5F0FF", accentText:"#5B21B6", headerBg:"#1E1035",  label:"社長",     emoji:"👑" },
 };
@@ -127,21 +127,63 @@ function Toast({ msg, accent }) {
 
 // ─── FIXED HEADER ────────────────────────────────────────────────────────────
 
+function PipeLogo({ size=36 }) {
+  const ic = size;
+  const r  = ic * 0.225;       // rx
+  const bw = ic * 0.125;       // 棒の幅
+  const br = ic * 0.0625;      // 棒rx
+  const py = ic * 0.175;       // 棒のy開始（上余白）
+  const ph = ic * 0.65;        // 棒の高さ
+  const cr = ic * 0.10;        // 丸の半径
+  const cx1 = ic * 0.2625, cx2 = ic * 0.5, cx3 = ic * 0.7375;
+  const cy1 = py + cr;                   // 左：上端
+  const cy2 = py + ph / 2;              // 中：中央
+  const cy3 = py + ph - cr;             // 右：下端
+  const fs  = size * 0.72;
+  const tw  = fs * 0.62;                // p の幅の概算
+
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap: size * 0.22 }}>
+      {/* アイコン */}
+      <svg width={ic} height={ic} viewBox={`0 0 ${ic} ${ic}`}>
+        <rect x="0" y="0" width={ic} height={ic} rx={r} fill="#1A6FE8"/>
+        {/* 左 */}
+        <rect x={cx1-bw/2} y={py} width={bw} height={ph} rx={br} fill="white" opacity="1"/>
+        <circle cx={cx1} cy={cy1} r={cr} fill="white" opacity="1"/>
+        {/* 中 */}
+        <rect x={cx2-bw/2} y={py} width={bw} height={ph} rx={br} fill="white" opacity="0.6"/>
+        <circle cx={cx2} cy={cy2} r={cr} fill="white" opacity="0.6"/>
+        {/* 右 */}
+        <rect x={cx3-bw/2} y={py} width={bw} height={ph} rx={br} fill="white" opacity="0.3"/>
+        <circle cx={cx3} cy={cy3} r={cr} fill="white" opacity="0.3"/>
+      </svg>
+
+      {/* ワードマーク */}
+      <svg width={tw*4.2} height={ic} viewBox={`0 0 ${tw*4.2} ${ic}`}>
+        {/* p */}
+        <text x="0" y={ic*0.78} style={{ fontFamily:"sans-serif", fontSize:fs, fontWeight:500, fill:"white" }}>p</text>
+        {/* i: 青ドット＋白縦棒 */}
+        <circle cx={tw+fs*0.13} cy={ic*0.22} r={fs*0.095} fill="#1A6FE8"/>
+        <rect x={tw+fs*0.085} y={ic*0.33} width={fs*0.09} height={ic*0.46} rx={fs*0.045} fill="white"/>
+        {/* pe */}
+        <text x={tw+fs*0.19} y={ic*0.78} style={{ fontFamily:"sans-serif", fontSize:fs, fontWeight:500, fill:"white" }}>pe</text>
+      </svg>
+    </div>
+  );
+}
+
 function AppHeader({ role }) {
   const th = THEME[role];
   return (
     <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:500, background:th.headerBg, paddingTop:"env(safe-area-inset-top)" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 18px", height:60 }}>
-        <div>
-          <div style={{ fontSize:17, fontWeight:900, color:"white", letterSpacing:"-.3px" }}>WorkFlow OS</div>
-          <div style={{ fontSize:11, color:"rgba(255,255,255,0.55)", marginTop:1 }}>案件管理システム</div>
-        </div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 18px", height:60 }}>
+        <PipeLogo size={38}/>
         <div style={{
-          display:"flex", alignItems:"center", gap:8,
+          display:"flex", alignItems:"center", gap:6,
           background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.3)",
-          borderRadius:24, padding:"7px 14px",
+          borderRadius:24, padding:"6px 14px",
         }}>
-          <span style={{ fontSize:15 }}>{th.emoji}</span>
+          <span style={{ fontSize:14 }}>{th.emoji}</span>
           <span style={{ fontSize:13, fontWeight:800, color:"white" }}>{th.label}</span>
         </div>
       </div>
