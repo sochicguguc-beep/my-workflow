@@ -821,18 +821,21 @@ function ProfileScreen({ role, onSwitch }) {
         }} onClick={e=>e.target===e.currentTarget&&closeModal()}>
           <div style={{
             width:"100%", maxWidth:420,
-            background:BASE.surface, borderRadius:"20px 20px 0 0",
-            padding:"20px 20px calc(20px + env(safe-area-inset-bottom))",
+            background:BASE.surface,
+            borderRadius:"20px 20px 0 0",
+            padding:"18px 18px 16px",
+            marginBottom:"calc(env(safe-area-inset-bottom) + 60px)",
             animation:"slideUp .25s ease",
+            boxShadow:"0 -4px 24px rgba(0,0,0,0.15)",
           }}>
             {/* ヘッダー */}
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-              <span style={{ fontSize:28 }}>{THEME[targetRole].emoji}</span>
-              <div>
-                <div style={{ fontSize:16, fontWeight:900 }}>{roles.find(r=>r.id===targetRole)?.label}として入室</div>
-                <div style={{ fontSize:12, color:BASE.sub }}>パスコードを入力してください</div>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+              <span style={{ fontSize:24 }}>{THEME[targetRole].emoji}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:15, fontWeight:900 }}>{roles.find(r=>r.id===targetRole)?.label}として入室</div>
+                <div style={{ fontSize:11, color:BASE.sub }}>パスコードを入力してください</div>
               </div>
-              <button onClick={closeModal} style={{ marginLeft:"auto", background:"none", border:"none", fontSize:20, color:BASE.sub, cursor:"pointer", padding:4 }}>✕</button>
+              <button onClick={closeModal} style={{ background:"#F0F0F0", border:"none", borderRadius:"50%", width:28, height:28, fontSize:14, color:BASE.sub, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
             </div>
 
             <input
@@ -844,20 +847,20 @@ function ProfileScreen({ role, onSwitch }) {
               maxLength={8}
               autoFocus
               style={{
-                width:"100%", padding:"12px 14px", borderRadius:12, textAlign:"center",
+                width:"100%", padding:"10px 14px", borderRadius:12, textAlign:"center",
                 border:`2px solid ${err?BASE.red:THEME[targetRole].accent}`,
                 background:err?"#FFF0F0":BASE.bg,
-                fontSize:24, letterSpacing:8, fontFamily:"inherit", outline:"none",
+                fontSize:22, letterSpacing:8, fontFamily:"inherit", outline:"none",
                 color:err?BASE.red:BASE.text, marginBottom:6, transition:"all .2s",
               }}
             />
-            <p style={{ textAlign:"center", fontSize:11, color:err?BASE.red:BASE.sub, fontWeight:err?700:400, margin:"0 0 14px" }}>
-              {err?"パスコードが違います":"デモ用：スタッフ 1111 / 上司 2222 / 経営者 3333"}
+            <p style={{ textAlign:"center", fontSize:11, color:err?BASE.red:BASE.sub, fontWeight:err?700:400, margin:"0 0 12px" }}>
+              {err?"パスコードが違います":"デモ：スタッフ 1111 / 上司 2222 / 経営者 3333"}
             </p>
 
             <div style={{ display:"flex", gap:8 }}>
-              <TapBtn color={BASE.sub} outline onClick={closeModal}>キャンセル</TapBtn>
-              <TapBtn color={THEME[targetRole].accent} disabled={code.length===0} onClick={trySwitch}>入室 →</TapBtn>
+              <button onClick={closeModal} className="tap-scale" style={{ flex:1, padding:"13px", borderRadius:12, border:`1.5px solid ${BASE.border}`, background:"transparent", color:BASE.sub, fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>キャンセル</button>
+              <button onClick={trySwitch} disabled={code.length===0} className={code.length>0?"tap-scale":""} style={{ flex:1, padding:"13px", borderRadius:12, border:"none", background:code.length>0?THEME[targetRole].accent:"#E8E6E0", color:code.length>0?"white":BASE.sub, fontSize:14, fontWeight:800, cursor:code.length>0?"pointer":"default", fontFamily:"inherit" }}>入室する →</button>
             </div>
           </div>
         </div>
