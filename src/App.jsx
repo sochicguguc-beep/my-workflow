@@ -264,6 +264,7 @@ function BottomNav({ active, onChange, unreadCount, role }) {
     { id:"home",    emoji:"🏠", label:"ホーム"    },
     { id:"notifs",  emoji:"🔔", label:"通知",      badge:unreadCount },
     { id:"cases",   emoji:"🗂️", label:"過去案件"  },
+    { id:"memo",    emoji:"📝", label:"共有メモ"  },
     { id:"profile", emoji:"👤", label:"マイページ" },
   ];
   return (
@@ -271,14 +272,14 @@ function BottomNav({ active, onChange, unreadCount, role }) {
       <div style={{ display:"flex", justifyContent:"space-around", height:60, alignItems:"center" }}>
         {items.map(n => (
           <button key={n.id} onClick={()=>onChange(n.id)} className="tap-scale" style={{
-            display:"flex", flexDirection:"column", alignItems:"center", gap:2,
+            display:"flex", flexDirection:"column", alignItems:"center", gap:1,
             background:"none", border:"none", cursor:"pointer", fontFamily:"inherit",
-            color:active===n.id?th.accent:BASE.sub, padding:"4px 14px", position:"relative",
+            color:active===n.id?th.accent:BASE.sub, padding:"4px 8px", position:"relative",
           }}>
-            {active===n.id && <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:28, height:2.5, borderRadius:2, background:th.accent }}/>}
-            <span style={{ fontSize:22 }}>{n.emoji}</span>
-            <span style={{ fontSize:9, fontWeight:700 }}>{n.label}</span>
-            {n.badge>0 && <div style={{ position:"absolute", top:2, right:8, width:16, height:16, borderRadius:"50%", background:BASE.red, color:"white", fontSize:9, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center" }}>{n.badge}</div>}
+            {active===n.id && <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:24, height:2.5, borderRadius:2, background:th.accent }}/>}
+            <span style={{ fontSize:20 }}>{n.emoji}</span>
+            <span style={{ fontSize:8, fontWeight:700 }}>{n.label}</span>
+            {n.badge>0 && <div style={{ position:"absolute", top:2, right:4, width:15, height:15, borderRadius:"50%", background:BASE.red, color:"white", fontSize:8, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center" }}>{n.badge}</div>}
           </button>
         ))}
       </div>
@@ -2446,6 +2447,215 @@ function TermsPage({ onBack }) {
   );
 }
 
+// ─── SHARED MEMO ─────────────────────────────────────────────────────────────
+
+const MEMO_STORE = {
+  get: () => { try { return JSON.parse(localStorage.getItem("pipe_memos") || "[]"); } catch { return []; } },
+  save: (memos) => { try { localStorage.setItem("pipe_memos", JSON.stringify(memos)); } catch {} },
+  add: (memo) => {
+    const memos = MEMO_STORE.get();
+    const m = { ...memo, id:Date.now(), likes:0, likedBy:[], pinned:false, createdAt:new Date().toLocaleString("ja-JP") };
+    memos.unshift(m);
+    MEMO_STORE.save(memos);
+    return m;
+  },
+  togglePin:  (id) => { MEMO_STORE.save(MEMO_STORE.get().map(m => m.id===id ? {...m,pinned:!m.pinned} : m)); },
+  toggleLike: (id, role) => {
+    MEMO_STORE.save(MEMO_STORE.get().map(m => {
+      if (m.id!==id) return m;
+      const liked = m.likedBy?.includes(role);
+      return { ...m, likes:(m.likes??0)+(liked?-1:1), likedBy:liked?(m.likedBy.filter(r=>r!==role)):[...(m.likedBy??[]),role] };
+    }));
+  },
+  delete: (id) => { MEMO_STORE.save(MEMO_STORE.get().filter(m=>m.id!==id)); },
+};
+
+function SharedMemoScreen({ role }) {
+  const [memos,     setMemos]     = useState([]);
+  const [showForm,  setShowForm]  = useState(false);
+  const [title,     setTitle]     = useState("");
+  const [body,      setBody]      = useState("");
+  const [openId,    setOpenId]    = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+  const th = THEME[role];
+
+  const load = () => {
+    const all = MEMO_STORE.get();
+    setMemos([...all.filter(m=>m.pinned), ...all.filter(m=>!m.pinned)]);
+  };
+  useEffect(()=>{ load(); const t=setInterval(load,3000); return()=>clearInterval(t); }, []);
+
+  const handleAdd    = () => { if(!title.trim()&&!body.trim()) return; MEMO_STORE.add({title:title.trim(),body:body.trim(),author:role,authorLabel:THEME[role].label}); setTitle(""); setBody(""); setShowForm(false); load(); };
+  const handleLike   = (id,e) => { e.stopPropagation(); MEMO_STORE.toggleLike(id,role); load(); };
+  const handlePin    = (id,e) => { e.stopPropagation(); MEMO_STORE.togglePin(id); load(); };
+  const handleDelete = (id,e) => { e.stopPropagation(); MEMO_STORE.delete(id); setConfirmId(null); load(); };
+
+  const tagStyle = {
+    staff:     { bg:"#D4F5EC", color:"#064E38" },
+    boss:      { bg:"#D8EEFF", color:"#0A3F7A" },
+    president: { bg:"#EAE4FF", color:"#3B2A88" },
+  };
+
+  const cloudStyle = `
+    .sky-board {
+      background: linear-gradient(180deg, #5BA8D4 0%, #87CEEB 45%, #B8E4F7 100%);
+      border-radius: 20px;
+      padding: 20px 12px 32px;
+      min-height: 400px;
+    }
+    .cloud-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 12px;
+    }
+    .cloud-card {
+      position: relative;
+      background: white;
+      border-radius: 36px;
+      padding: 13px 12px 11px;
+      filter: drop-shadow(0 4px 10px rgba(60,120,180,0.16));
+      cursor: pointer;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .cloud-card::before {
+      content:''; position:absolute; border-radius:50%; background:white;
+      width:50%; height:65%; top:-26%; left:14%; z-index:-1;
+    }
+    .cloud-card::after {
+      content:''; position:absolute; border-radius:50%; background:white;
+      width:34%; height:52%; top:-17%; right:14%; z-index:-1;
+    }
+    .cloud-inner { position:relative; z-index:3; width:100%; }
+    .col-l { animation: fA 4.2s ease-in-out infinite; }
+    .col-r { animation: fB 3.9s ease-in-out infinite; margin-top:26px; }
+    @keyframes fA { 0%,100%{transform:translateY(0) rotate(-0.6deg)} 50%{transform:translateY(-6px) rotate(0.5deg)} }
+    @keyframes fB { 0%,100%{transform:translateY(0) rotate(0.5deg)}  50%{transform:translateY(-5px) rotate(-0.6deg)} }
+    .cloud-detail { display:none; margin-top:8px; padding-top:8px; border-top:1px solid #EEF4FA; text-align:left; }
+    .cloud-detail.open { display:block; }
+  `;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+      <style>{cloudStyle}</style>
+
+      {/* ヘッダー */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 16px 12px" }}>
+        <div>
+          <div style={{ fontSize:16, fontWeight:900, color:BASE.text }}>📝 共有メモ</div>
+          <div style={{ fontSize:11, color:BASE.sub, marginTop:1 }}>全員が見られます</div>
+        </div>
+        <button onClick={()=>setShowForm(v=>!v)} className="tap-scale" style={{
+          padding:"8px 16px", borderRadius:20, border:"none",
+          background: showForm ? BASE.sub : th.accent,
+          color:"white", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
+        }}>{showForm ? "キャンセル" : "+ 書く"}</button>
+      </div>
+
+      {/* 投稿フォーム */}
+      {showForm && (
+        <div style={{ padding:"0 16px 12px", animation:"slideUp .2s ease" }}>
+          <Tile style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="タイトル（短く）"
+              style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:`1.5px solid ${BASE.border}`, background:BASE.bg, fontSize:14, fontFamily:"inherit", outline:"none" }}
+            />
+            <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="アイデアを書いてください…"
+              style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:`1.5px solid ${BASE.border}`, background:BASE.bg, fontSize:14, fontFamily:"inherit", outline:"none", height:72, resize:"none", lineHeight:1.7 }}
+            />
+            <TapBtn color={th.accent} disabled={!title.trim()&&!body.trim()} onClick={handleAdd}>投稿する</TapBtn>
+          </Tile>
+        </div>
+      )}
+
+      {/* 空状態 */}
+      {memos.length===0 && (
+        <div className="sky-board" style={{ margin:"0 16px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ textAlign:"center", color:"white" }}>
+            <div style={{ fontSize:36, marginBottom:8 }}>☁️</div>
+            <div style={{ fontSize:14, fontWeight:700 }}>まだメモがありません</div>
+            <div style={{ fontSize:11, opacity:.8, marginTop:4 }}>「+ 書く」からアイデアを投稿しましょう</div>
+          </div>
+        </div>
+      )}
+
+      {/* 雲ボード */}
+      {memos.length > 0 && (
+        <div className="sky-board" style={{ margin:"0 16px" }}>
+          <div className="cloud-grid">
+            {memos.map((m, i) => {
+              const isOpen    = openId === m.id;
+              const isOwner   = m.author === role;
+              const liked     = m.likedBy?.includes(role);
+              const isConfirm = confirmId === m.id;
+              const ts        = tagStyle[m.author] ?? { bg:"#EEE", color:"#555" };
+              const colClass  = i%2===0 ? "col-l" : "col-r";
+
+              return (
+                <div key={m.id} className={`cloud-card ${colClass}`}
+                  onClick={()=>setOpenId(isOpen ? null : m.id)}
+                  style={{ animationDelay:`${i*0.3}s` }}
+                >
+                  <div className="cloud-inner">
+                    {m.pinned && <div style={{ fontSize:8, color:"#E8A000", marginBottom:2 }}>📌</div>}
+                    <div style={{ fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:20, display:"inline-block", marginBottom:4, background:ts.bg, color:ts.color }}>
+                      {THEME[m.author]?.emoji} {m.authorLabel??m.author}
+                    </div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#1A2A3A", lineHeight:1.35 }}>
+                      {m.title || m.body?.slice(0,16)}
+                    </div>
+                    {!isOpen && <div style={{ fontSize:8, color:"#AABCCC", marginTop:3 }}>タップ ▾</div>}
+
+                    {/* 展開エリア */}
+                    <div className={`cloud-detail${isOpen?" open":""}`}>
+                      {m.body && <div style={{ fontSize:10, color:"#5A6A7A", lineHeight:1.65, marginBottom:7 }}>{m.body}</div>}
+                      <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                        <button onClick={e=>handleLike(m.id,e)} style={{
+                          fontSize:9, padding:"2px 7px", borderRadius:20,
+                          border:`1px solid ${liked?"#FFAED1":"#E0EAF4"}`,
+                          background:liked?"#FFE8F2":"#F4F9FF",
+                          color:liked?"#C0306A":"#6688AA", cursor:"pointer",
+                        }}>👍 {m.likes??0}</button>
+                        <button onClick={e=>handlePin(m.id,e)} style={{
+                          fontSize:9, padding:"2px 7px", borderRadius:20,
+                          border:`1px solid ${m.pinned?"#FAC75588":"#E0EAF4"}`,
+                          background:m.pinned?"#FFF6EE":"#F4F9FF",
+                          color:m.pinned?"#854F0B":"#6688AA", cursor:"pointer",
+                        }}>📌</button>
+                        <span style={{ fontSize:8, color:"#9BB0C4", marginLeft:"auto" }}>{m.createdAt?.slice(0,8)}</span>
+                        {isOwner && !isConfirm && (
+                          <button onClick={e=>{e.stopPropagation();setConfirmId(m.id);}} style={{ fontSize:9, padding:"2px 6px", borderRadius:20, border:"1px solid #E0EAF4", background:"transparent", color:"#AAA", cursor:"pointer" }}>🗑</button>
+                        )}
+                        {isConfirm && (
+                          <div style={{ display:"flex", gap:4 }}>
+                            <button onClick={e=>handleDelete(m.id,e)} style={{ fontSize:8, padding:"2px 6px", borderRadius:8, border:"none", background:"#E63946", color:"white", cursor:"pointer" }}>削除</button>
+                            <button onClick={e=>{e.stopPropagation();setConfirmId(null);}} style={{ fontSize:8, padding:"2px 6px", borderRadius:8, border:"1px solid #DDD", background:"transparent", color:"#AAA", cursor:"pointer" }}>戻る</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* 書くボタン */}
+            <button onClick={()=>setShowForm(true)} style={{
+              gridColumn:"span 2", marginTop:4,
+              padding:"12px", borderRadius:36,
+              border:"1.5px dashed rgba(255,255,255,0.6)",
+              background:"rgba(255,255,255,0.18)",
+              color:"white", fontSize:12, cursor:"pointer",
+            }}>＋ アイデアを書く</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [tab,        setTab]        = useState("home");
   const [role,       setRole]       = useState("staff");
@@ -2478,6 +2688,7 @@ export default function App() {
           {tab==="home"    && <HomeScreen    role={role} onSwitch={switchRole} sharedTask={sharedTask} onShareTask={setSharedTask}/>}
           {tab==="cases"   && <CasesScreen role={role}/>}
           {tab==="notifs"  && <NotifsScreen  onRead={()=>setUnread(0)} role={role}/>}
+          {tab==="memo"    && <SharedMemoScreen role={role}/>}
           {tab==="profile" && <ProfileScreen role={role} onSwitch={switchRole}/>}
         </div>
       </div>
